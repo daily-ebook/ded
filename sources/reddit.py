@@ -8,6 +8,13 @@
 import requests 
 from newspaper import Article
 
+metadata = {
+  "name": "reddit",
+  "fullname": "Reddit",
+  "description": "This source will provide fake data, as a test.",
+  "options": []
+}
+
 def build(config):
     subreddit = config.get("subreddit", "all")
     sort = config.get("sort", "hot")

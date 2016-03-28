@@ -3,6 +3,13 @@ import requests
 from newspaper import Article
 import feedparser
 
+metadata = {
+  "name": "rss",
+  "fullname": "RSS Reader",
+  "description": "This source will provide fake data, as a test.",
+  "options": []
+}
+
 def build(config):
     link = config.get("source")
     limit = config.get("limit", 10)

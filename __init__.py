@@ -8,6 +8,8 @@ import yaml
         config = yaml.load(file)
         generate_book_from_config(config)""" 
 
+all_sources = utils.get_sources_metadata()
+
 def generate_book_from_config(config, task=None):
   config = utils.fix_config(config)
 

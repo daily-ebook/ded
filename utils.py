@@ -3,6 +3,9 @@ from .exceptions import BadConfigException
 from datetime import datetime 
 import glob
 import importlib
+import os 
+
+current_path = os.path.dirname(os.path.realpath(__file__))
 
 def fix_config(config):
   config["tmp_dir"] = config.get("tmp_dir", "/tmp/")
@@ -11,7 +14,7 @@ def fix_config(config):
     raise BadConfigException("This should never happen")
   return config
   
-def import_modules(folder, modules):
+def import_modules(folder, modules=None):
   loadedModules = []
   for module in modules:
     try:
@@ -28,22 +31,22 @@ def make_title(title):
   title = d.strftime(title)
   return title
 
-def get_sources_metadata(folder):
-  generators = []
+def get_sources_metadata():
+  metadatas = []
 
-  modules = glob.glob("folder/*.py")
-  modules.remove("__init__.py")
+  modules = glob.glob(current_path + "/sources/*.py")
+
+  modules.remove(current_path + "/sources/__init__.py")
 
   for module in modules:
-    module = module.replace(".py","")
-    print(module)
+    module = module.replace(".py","").replace(current_path + "/sources/", "")
     try:
-      s = __import__("{0}.{1}".format(folder,module), fromlist=[''])
-      generators.append(s.meta)
+      s = importlib.import_module(".sources." + module, "ded")
+      metadatas.append(s.metadata)
     except Exception as e:
       print(e)
 
-  return generators
+  return metadatas
 
 def update_state(task, **kwargs):
   if task:
