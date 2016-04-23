@@ -1,28 +1,26 @@
 from . import utils
 from . import book_generator
 
-import yaml
+sources = utils.import_sources()
+sources_metadata = utils.get_sources_metadata(sources)
 
-"""if __name__ == "__main__":
-    with open("recipe.yaml", 'r') as file:
-        config = yaml.load(file)
-        generate_book_from_config(config)""" 
+def generate_book_from_recipe(recipe, task=None):
+  recipe = utils.fix_recipe(recipe)
 
-all_sources = utils.get_sources_metadata()
-
-def generate_book_from_config(config, task=None):
-  config = utils.fix_config(config)
-
-  book = {}
-  book["title"] = utils.make_title(config.get("title") or "Daily Epub")
-  book["chapters"] = []
+  recipe["title"] = utils.make_title(recipe.get("title") or "Daily Epub")
+  recipe["chapters"] = []
 
   utils.update_state(task, meta={'status': 'Importing sources'})
-  sources = utils.import_modules(".sources", config.get("sources"))
-  for i, source in enumerate(config.get("sources")):
-    chapter = sources[i].build(config.get("settings")[i][source])
-    #checkChapter(chapter)
-    book.get("chapters").append(chapter)
 
-  book_generator.generate_book(book, config)
+  #XXX: Improve this for loop
+  for i, reciped_source in enumerate(recipe.get("sources")):
+    reciped_source_name = reciped_source.get("source")
+    for source_generator in sources: 
+      if source_generator.metadata.get("name") == reciped_source_name:
+        chapter = source_generator.build(reciped_source.get("settings") or {})
+        
+        recipe.get("chapters").append(chapter)
+
+
+  book_generator.generate_book(recipe)
   return True

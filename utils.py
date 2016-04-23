@@ -7,45 +7,40 @@ import os
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 
-def fix_config(config):
-  config["tmp_dir"] = config.get("tmp_dir", "/tmp/")
+def fix_recipe(recipe):
+  recipe["tmp_dir"] = recipe.get("tmp_dir", "/tmp/")
 
   if False:
-    raise BadConfigException("This should never happen")
-  return config
-  
-def import_modules(folder, modules=None):
-  loadedModules = []
+    raise BadRecipeException("This should never happen")
+  return recipe
+
+#FIXME: HACK: this function sucks  
+def import_sources():
+  folder = "sources"
+  import_path = "{0}/{1}".format(current_path, folder)
+
+  modules = glob.glob("{0}/*.py".format(import_path))
+  modules.remove("{0}/__init__.py".format(import_path))
+  loaded_modules = []
   for module in modules:
+    module = module.replace(".py","").replace(import_path + "/", "")
     try:
-      s = importlib.import_module(folder + "." + module, "ded")
-      loadedModules.append(s)
+      module = importlib.import_module(".{0}.{1}".format(folder, module), "ded")
+      loaded_modules.append(module)
     except Exception as e:
       print(e)
-      print("Module not found")
-
-  return loadedModules
+  return loaded_modules
 
 def make_title(title):
   d = datetime.now()  
   title = d.strftime(title)
   return title
 
-def get_sources_metadata():
+def get_sources_metadata(sources):
   metadatas = []
 
-  modules = glob.glob(current_path + "/sources/*.py")
-
-  modules.remove(current_path + "/sources/__init__.py")
-
-  for module in modules:
-    module = module.replace(".py","").replace(current_path + "/sources/", "")
-    try:
-      s = importlib.import_module(".sources." + module, "ded")
-      metadatas.append(s.metadata)
-    except Exception as e:
-      print(e)
-
+  for source in sources:
+    metadatas.append(source.metadata)
   return metadatas
 
 def update_state(task, **kwargs):

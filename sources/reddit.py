@@ -5,6 +5,9 @@
 # comments: True or False
 # commentsDepth: 1 (root)
 # limit: n (defaults to 20)
+from . import Chapter, Appendix
+from dominate.tags import *
+
 import requests 
 from newspaper import Article
 
@@ -24,19 +27,15 @@ def build(config):
     summary = config.get("summary", False)
     commentsDepth = config.get("commentsDepth", 1)
 
-    source = {}
-    source["title"] = subreddit
-    source["Subtitle"] = "Sorting by {0}".format(sort)
+    chapter = Chapter("reddit: /r/{0}".format(subreddit), "Sorting by {0}".format(sort))
 
-    source["body"] = ""
-    source["appendixes"] = []
     url = "https://www.reddit.com/r/{0}/{1}.json".format(subreddit,sort)
-
     payload = {'limit': limit}
     headers = {'user-agent': 'daily-epub by /u/cris9696'}
     r = requests.get(url, headers=headers, params=payload)
     json = r.json()
     
+
     posts = json["data"]["children"]
     for post in posts:
         post = post.get("data")
@@ -44,46 +43,45 @@ def build(config):
             title = post.get("title")
             author = post.get("author") or "[deleted]"
             num_comments = post.get("num_comments")
-            commentsAnchor = "reddit-{0}-comments".format(post.get("id"))
-            textAnchor = "reddit-{0}-text".format(post.get("id"))
+            commentsAnchor = "#reddit-{0}-comments".format(post.get("id"))
+            textAnchor = "#reddit-{0}-text".format(post.get("id"))
 
-            source["body"] += "**{0}**\n\n".format(title)
+            chapter.add(b("{0}".format(title)))
+            chapter.add(br())
 
-            strBody = ""
             if text:
-                kind = "Link Text"
                 if post.get("is_self"):
                     kind = "Self Text"
-                strBody += "[{0}](#{1}) ".format(kind, textAnchor)
+                else:
+                    kind = "Link Text"
+
+                chapter.add(a(kind,href=textAnchor))
 
             if comments:
-                strBody += "[{0} comments](#{1})".format(num_comments, commentsAnchor)
+                chapter.add(a("{0} comments".format(num_comments),href=commentsAnchor))
 
-            source["body"] += "{0}\n\n".format(strBody)
-            source["body"] += "-----\n\n"
+            chapter.add(hr())
             #end of body, let's build appendix
 
             if text:
-                appendix = {}
+                appendix = Appendix(title)
+
                 if post.get("is_self"):
-                    appendix["title"] = title
-                    appendix["body"] = post.get("selftext") or "<Selfpost has no selftext>"
+                    appendix.add(post.get("selftext") or "<Selfpost has no selftext>")
                 else:
-                    appendix["title"] = title
                     url = post.get("url")
                     article = Article(url)
                     article.download()
                     article.parse()
-                    appendix["body"] = article.text
+                    appendix.add(article.text) 
 
-                source["appendixes"].append(appendix)
+                chapter.addAppendix(appendix)
 
 
-            if comments:
-                appendix = {}
-                appendix["title"] = "Comments for '{0}'".format((title[:61] + '...') if len(title) > 64 else title)
-                appendix["subtitle"] = "*{0}* comments".format(num_comments)
-                appendix["body"] = "There should be comments here."
-                source["appendixes"].append(appendix)
-
-    return source
+                """if comments:
+                title = ("Comments for '{0}'".format((title[:61] + '...') if len(title) > 64 else title)
+                subtitle = "{0} comments".format(num_comments)
+                appendix = chapter.createAppendix(title, subtitle)
+                appendix.add("There should be comments here.")
+                chapter.addAppendix(appendix)"""
+    return chapter
