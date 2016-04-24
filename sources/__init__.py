@@ -1,12 +1,14 @@
 from dominate.tags import *
+import uuid
 
 class Chapter:
   def __init__(self, title = None, subtitle = None):
     self.chapter = div(_class="chapter")
-    cHeader = self.chapter.add(header())
+    cHeader = self.chapter.add(div(_class="header"))
     cHeader.add(h1(title))
     if subtitle:
       cHeader.add(p(subtitle,_class="subtitle"))
+    cHeader.add(hr())
 
     self.content = self.chapter.add(div(_class="content"))
     self.appendixes = []  
@@ -18,10 +20,18 @@ class Chapter:
     return self.appendixes.append(appendix)
 
 class Appendix:
-  def __init__(self, title = None, subtitle = None):
+  def __init__(self, title = None, subtitle = None, name=None):
     self.appendix = div(_class="appendix")
-    aHeader = self.appendix.add(header())
-    aHeader.add(h2(title))
+    
+    if name:
+      self.name = name
+    else:
+      self.name = str(uuid.uuid4())
+
+    self.appendix.add(a(id=self.name))
+
+    aHeader = self.appendix.add(div(_class="header"))
+    aHeader.add(h4(title))
     if subtitle:
       aHeader.add(p(subtitle,_class="subtitle"))
 

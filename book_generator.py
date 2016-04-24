@@ -5,9 +5,11 @@ from dominate.tags import *
 
 def generate_html(recipe):
   book_title = recipe.get("title")
-  html = div(id="book")
+  
+  html = body(id="book")
   chapters = div(id="chapters")
   appendixes = div(id="appendixes")
+  appendixes.add(h1("Appendix"))
 
   for chapter in (recipe.get("chapters", [])):
     chapters.add(chapter.chapter)
@@ -21,25 +23,31 @@ def generate_html(recipe):
 
 def make_epub(html, recipe):
   current_path = os.path.dirname(os.path.realpath(__file__))
-  filename = recipe.get("filename")
-  savepath = recipe.get("savepath", "./")
-  outfile = savepath + filename 
   
-  with open('/tmp/{0}.html'.format(filename), 'w+') as f:
+  tmp_dir = recipe.get("tmp_dir")
+
+  outfolder = recipe.get("outfolder")
+  filename = recipe.get("filename")
+  outfile = outfolder + filename 
+  
+  with open('{0}/{1}.html'.format(tmp_dir,filename), 'w+') as f:
     f.write(html)
 
-  with open('/tmp/{0}-metadata.xml'.format(filename), 'w+') as f:
+  with open('{0}/{1}-metadata.xml'.format(tmp_dir,filename), 'w+') as f:
     f.write('<dc:title>{0}</dc:title>\n<dc:creator opf:file-as="Andrew, Rachel" opf:role="aut">Rachel Andrew</dc:creator>'.format(recipe.get("title")))
 
-  print(html)
   subprocess.call(["pandoc",
-                  "-S", 
-                  "-o" + "/tmp/{0}.epub".format(filename) , 
+                  "-S",
+                  "-s",
+                  "-o" + "{0}/{1}.epub".format(tmp_dir,filename) , 
                   "--epub-stylesheet="+ current_path +"/epub-meta/style.css", 
-                  "--epub-metadata=/tmp/{0}-metadata.xml".format(filename),
-                  "/tmp/{0}.html".format(filename)])
+                  "--epub-metadata={0}/{1}-metadata.xml".format(tmp_dir,filename),
+                  "{0}/{1}.html".format(tmp_dir,filename)])
 
-  subprocess.call(["ebook-convert", "/tmp/{0}.epub".format(filename), "{0}.mobi".format(outfile), "--input-profile=kindle"])
+  subprocess.call(["ebook-convert", 
+                  "{0}/{1}.epub".format(tmp_dir,filename), 
+                  "{0}.mobi".format(outfile), 
+                  "--input-profile=kindle"])
 
 def generate_book(recipe):
   html = generate_html(recipe)

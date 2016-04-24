@@ -7,6 +7,8 @@ sources_metadata = utils.get_sources_metadata(sources)
 def generate_book_from_recipe(recipe, task=None):
   recipe = utils.fix_recipe(recipe)
 
+  utils.setup_user_space(recipe)
+
   recipe["title"] = utils.make_title(recipe.get("title") or "Daily Epub")
   recipe["chapters"] = []
 

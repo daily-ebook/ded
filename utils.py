@@ -7,8 +7,20 @@ import os
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 
+def setup_user_space(recipe):
+  outfolder = recipe.get("outfolder")
+  tmp_dir = recipe.get("tmp_dir")
+
+  if not os.path.exists(outfolder):
+    os.makedirs(outfolder)
+
+  if not os.path.exists(tmp_dir):
+    os.makedirs(tmp_dir)
+
 def fix_recipe(recipe):
-  recipe["tmp_dir"] = recipe.get("tmp_dir", "/tmp/")
+  d = datetime.now()  
+  folder = "/tmp/books/"+d.strftime("%H%M%S")
+  recipe["tmp_dir"] = recipe.get("tmp_dir", folder)
 
   if False:
     raise BadRecipeException("This should never happen")
