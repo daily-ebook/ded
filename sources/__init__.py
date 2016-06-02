@@ -3,12 +3,12 @@ import uuid
 
 class Chapter:
   def __init__(self, title = None, subtitle = None):
-    self.chapter = div(_class="chapter")
-    cHeader = self.chapter.add(div(_class="header"))
-    cHeader.add(h1(title))
+    self.chapter = article(_class="chapter")
+    
+    self.chapter.add(h1(title))
     if subtitle:
-      cHeader.add(p(subtitle,_class="subtitle"))
-    cHeader.add(hr())
+      self.chapter.add(p(subtitle,_class="subtitle"))
+    self.chapter.add(hr())
 
     self.content = self.chapter.add(div(_class="content"))
     self.appendixes = []  
@@ -21,19 +21,16 @@ class Chapter:
 
 class Appendix:
   def __init__(self, title = None, subtitle = None, name=None):
-    self.appendix = div(_class="appendix")
+    self.appendix = article(_class="appendix")
     
     if name:
       self.name = name
     else:
       self.name = str(uuid.uuid4())
 
-    self.appendix.add(a(id=self.name))
-
-    aHeader = self.appendix.add(div(_class="header"))
-    aHeader.add(h4(title))
+    self.appendix.add(h4(title, id=self.name))
     if subtitle:
-      aHeader.add(p(subtitle,_class="subtitle"))
+      self.appendix.add(p(subtitle,_class="subtitle"))
 
     self.content = self.appendix.add(div(_class="content"))
 

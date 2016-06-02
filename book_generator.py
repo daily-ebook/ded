@@ -7,17 +7,17 @@ def generate_html(recipe):
   book_title = recipe.get("title")
   
   html = body(id="book")
-  chapters = div(id="chapters")
-  appendixes = div(id="appendixes")
+  chapters = section(id="chapters")
+  appendixes = section(id="appendixes")
   appendixes.add(h1("Appendix"))
 
   for chapter in (recipe.get("chapters", [])):
-    chapters.add(chapter.chapter)
+    chapters.add(chapter.chapter.children)
     for appendix in chapter.appendixes:
-      appendixes.add(appendix.appendix)
+      appendixes.add(appendix.appendix.children)
 
-  html.add(chapters)
-  html.add(appendixes)
+  html.add(chapters.children)
+  html.add(appendixes.children)
 
   return str(html)
 
@@ -51,5 +51,6 @@ def make_epub(html, recipe):
 
 def generate_book(recipe):
   html = generate_html(recipe)
+  print(html)
   make_epub(html, recipe)
 
