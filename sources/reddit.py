@@ -5,104 +5,159 @@
 # comments: True or False
 # commentsDepth: 1 (root)
 # limit: n (defaults to 20)
+import re
+
+import requests
+from newspaper import Article
+
 from . import Chapter, Appendix
 from dominate.tags import *
 
-import requests 
-from newspaper import Article
-
 metadata = {
-  "name": "reddit",
-  "fullname": "Reddit",
-  "description": "This source will provide fake data, as a test.",
-  "options": []
+    "name": "reddit",
+    "fullname": "Reddit",
+    "description": "This source will provide fake data, as a test.",
+    "options": []
 }
 
 def build(config):
-  subreddit = config.get("subreddit", "all")
-  sort = config.get("sort", "hot")
-  limit = config.get("limit", 20)
-  
-  parseContent = config.get("content", False)
-  summary = config.get("summary", False)
-  
-  parseComments = config.get("comments", False)
-  commentsDepth = config.get("commentsDepth", 1)
 
-  chapter = Chapter("reddit: /r/{0}".format(subreddit), "Sorting by {0}".format(sort))
+    data = get_data(config)
 
-  headers = {'user-agent': 'daily-epub by /u/cris9696'}
+    parse_content = config.get("content", False)
+    parse_comments = config.get("comments", False)
 
-  url = "https://www.reddit.com/r/{0}/{1}.json".format(subreddit,sort)
-  payload = {'limit': limit}
-  r = requests.get(url, headers=headers, params=payload)
+    chapter = Chapter("reddit: /r/{0}".format(data.get("subreddit")), "Sorting by {0}".format(data.get("sort_by")))
 
-  if r.status_code == 200:
-    json = r.json()
-    
-    posts = json["data"]["children"]
-    for post in posts:
-      post = post.get("data")
-      if not post.get("stickied"):
-        
-        title = post.get("title")
-        author = post.get("author") or "[deleted]"
-        num_comments = post.get("num_comments")
-        
-        commentsAnchor = "reddit-{0}-comments".format(post.get("id"))
-        textAnchor = "reddit-{0}-text".format(post.get("id"))
+    if data.get("error") is None:
 
-        chapter.add( a(b(title), href="#"+textAnchor) ) 
-        chapter.add( " " )
-        chapter.add( small("({0})".format(post.get("domain"))) )
-        chapter.add( br() )
+        posts = data.get("posts", [])
 
-        if parseComments:
-          chapter.add(a("{0} comments".format(num_comments),href="#"+commentsAnchor))
+        for post in posts:
+            if not post.get("stickied"):
 
-        chapter.add(hr())
-        #end of body, let's build appendix
+                title = post.get("title")
+                author = post.get("author") or "[deleted]"
+                num_comments = post.get("num_comments")
 
-        if parseContent:
-          appendix = Appendix(title, post.get("domain"), name=textAnchor)
+                text_anchor = "reddit-{0}-text".format(post.get("id"))
 
-          if post.get("is_self"):
-            appendix.add(post.get("selftext") or "<This selfpost has no selftext>")
-          else:
-            url = post.get("url")
-            r_head = requests.head(url, headers=headers) #for content type
+                chapter.add(a(b(title), href="#"+text_anchor))
+                chapter.add(" ")
+                chapter.add(small("({0})".format(post.get("domain"))))
+                chapter.add(br())
 
-            if r_head.status_code == 200:
-              content_type = r_head.headers["Content-Type"]
-              if content_type.startswith("image/") and content_type != "image/gif":
-                appendix.add( img(src=url) )
+                if parse_comments:
+                    comments_anchor = "reddit-{0}-comments".format(post.get("id"))
+                    chapter.add(a("{0} comments".format(num_comments), href="#"+comments_anchor))
 
-              elif content_type.startswith("video/") or content_type == "image/gif" or content_type.startswith("application/"):
-                appendix.add( p("Url File Format not supported") ) 
-              
-              else:
-                article = Article(url)
-                article.download()
-                article.parse()
+                chapter.add(hr())
+                #end of body, let's build appendix
 
-                if article.top_image:
-                  appendix.add( img(src=article.top_image) )
-                appendix.add( p(article.text) ) 
+                if parse_content:
+                    appendix = Appendix(title, post.get("domain"), name=text_anchor)
 
-            else:
-              chapter.add( p("API Status Code not 200") )
+                    if post.get("is_self"):
+                        appendix.add(post.get("selftext") or "<This selfpost has no selftext>")
+                    else:
+                        if post.get("error") is None:
+                            content_type = post.get("content_type")
+                            if content_type.startswith("image/") and content_type != "image/gif":
+                                appendix.add(img(src=post.get("url")))
 
-          chapter.addAppendix(appendix)
+                            elif content_type.startswith("video/") or content_type == "image/gif" or content_type.startswith("application/"):
+                                appendix.add(p("Url File Format not supported"))
+                            else:
+                                article = post["article"]
 
-        if parseComments:
-          if len(title) > 64:
-            title = "Comments for '{0}'".format(title[:61] + '...')
+                                if article.top_image:
+                                    appendix.add(img(src=article.top_image))
+                                appendix.add(p(article.text))
+                        else:
+                            chapter.add(p(post.get("error")))
 
-          subtitle = "{0} comments".format(num_comments)
-          appendix = Appendix(title, subtitle, name=commentsAnchor)
-          appendix.add( "There should be comments here." )
-          chapter.addAppendix(appendix)
-  else:
-    chapter.add( p("API Status Code not 200") )
+                    chapter.addAppendix(appendix)
 
-  return chapter
+                if parse_comments:
+                    if len(title) > 64:
+                        title = "Comments for '{0}'".format(title[:61] + '...')
+
+                    subtitle = "{0} comments".format(num_comments)
+                    appendix = Appendix(title, subtitle, name=comments_anchor)
+                    appendix.add("There should be comments here.")
+                    chapter.addAppendix(appendix)
+    else:
+        chapter.add(p("API Status Code not 200"))
+
+    return chapter
+
+def get_data(config):
+    data = {}
+    subreddit = data["subreddit"] = config.get("subreddit", "all")
+    sort_by = data["sort_by"] = config.get("sort_by", "hot")
+    limit = data["limit"] = config.get("limit", 20)
+
+    parse_content = config.get("content", False)
+    summary = config.get("summary", False)
+
+    parse_comments = config.get("comments", False)
+    comments_depth = config.get("comments_depth", 1)
+
+    headers = {'user-agent': 'daily-epub by /u/cris9696'}
+    url = "https://www.reddit.com/r/{0}/{1}.json".format(subreddit, sort_by)
+    payload = {'limit': limit}
+    subreddit_request = requests.get(url, headers=headers, params=payload)
+
+    data["posts"] = []
+
+    if subreddit_request.status_code == 200:
+        json = subreddit_request.json()
+
+        posts = json["data"]["children"]
+        for post in posts:
+            post = post.get("data")
+            if parse_comments:
+                #parse_comments
+                pass
+
+            if parse_content:
+                if post.get("is_self"):
+                    pass
+                else:
+                    url = post["url"] = fix_url(post.get("url"))
+
+                    #for content type
+                    r_head = requests.head(url,
+                                            headers=headers,
+                                            allow_redirects=True)
+
+                    if r_head.status_code == 200:
+                        content_type = post["content_type"] = r_head.headers["Content-Type"]
+                        if content_type.startswith("image/") and content_type != "image/gif":
+                            pass
+                        elif content_type.startswith("video/") or content_type == "image/gif" or content_type.startswith("application/"):
+                            pass
+                        else:
+                            article = Article(url)
+                            article.download()
+                            article.parse()
+
+                            post["article"] = article
+                    else:
+                        post["error"] = "{0}: Error Code {1}".format(url, r_head.status_code)
+
+            data["posts"].append(post)
+    else:
+        data["error"] = "{0}: Error Code {1}".format(url, r_head.status_code)
+
+    return data
+
+def fix_url(url):
+    if "imgur.com" in url:
+        if "i.imgur.com" not in url:
+            url = url.replace("imgur.com", "i.imgur.com")
+            url = url.replace("/gallery", "")
+            if re.search(r"\.[a-zA-Z\d]+$", url) is None:
+                url = url + ".png"
+            url = url.replace(".gifv", ".gif")
+    return url
