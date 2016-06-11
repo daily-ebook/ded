@@ -1,7 +1,9 @@
-
-import requests 
 from newspaper import Article
 import feedparser
+import uuid
+
+from . import Chapter, Appendix
+from dominate.tags import *
 
 metadata = {
   "name": "rss",
@@ -11,32 +13,42 @@ metadata = {
 }
 
 def build(config):
-    link = config.get("source")
+    source = config.get("source")
     limit = config.get("limit", 10)
 
-    feed = feedparser.parse(link)
+    _feed = feedparser.parse(source)
+    feed = _feed.get("feed")
+    entries = _feed.get("entries", [])
 
-    source = {}
-    source["title"] = feed['feed']["title"]
-    source["subtitle"] = feed['feed']["subtitle"]
+    chapter = Chapter(feed.get("title", ""), feed.get("subtitle", ""))
 
-    source["body"] = ""
-    source["appendixes"] = []
+    limit = min(limit, len(entries))
+    for i in range(0, limit):
+        entry = entries[i]
+        title = entry.get("title", "<No title for this entry>")
 
-    for i in range(0, min(limit, len(feed["entries"])) ):
-        entry = feed["entries"][i]
-        title = entry["title"]
-        link = entry["link"]
-        textAnchor = "rss-" + link
-        source["body"] += "**{0}**\n\n".format(title)
-        source["body"] += "-----\n\n"
+        url = entry.get("link")
 
-        appendix = {}
-        appendix["title"] = title
-        article = Article(link)
-        article.download()
-        article.parse()
-        appendix["body"] = article.text
-        source["appendixes"].append(appendix)
+        if url is None:
+            pass
+        else:
+            title = entry.get("title")
 
-    return source
+            text_anchor = str(uuid.uuid4())
+
+            chapter.add(a(b(title), href="#"+text_anchor))
+            chapter.add(br())
+            chapter.add(hr())
+
+            appendix = Appendix(title, "", name=text_anchor)
+            article = Article(url)
+            article.download()
+            article.parse()
+
+            if article.top_image:
+                appendix.add(img(src=article.top_image))
+            appendix.add(p(article.text))
+
+            chapter.addAppendix(appendix)
+
+    return chapter
