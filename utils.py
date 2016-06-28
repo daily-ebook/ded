@@ -1,11 +1,9 @@
-from .exceptions import BadConfigException
+from .exceptions import BadRecipeException
 
 from datetime import datetime
 import glob
 import importlib
 import os
-
-current_path = os.path.dirname(os.path.realpath(__file__))
 
 def setup_user_space(recipe):
     outfolder = recipe.get("outfolder")
@@ -18,44 +16,47 @@ def setup_user_space(recipe):
         os.makedirs(tmp_dir)
 
 def fix_recipe(recipe):
+    recipe["title"] = make_ebook_title(recipe.get("title") or "Daily Epub")
+
     d = datetime.now()
     folder = "/tmp/books/"+d.strftime("%H%M%S")
-    recipe["tmp_dir"] = recipe.get("tmp_dir", folder)
+    recipe["tmp_dir"] = folder
 
     if False:
         raise BadRecipeException("This should never happen")
+
     return recipe
 
 #FIXME: HACK: this function sucks
 def import_sources():
+    current_path = os.path.dirname(os.path.realpath(__file__))
     folder = "sources"
     import_path = "{0}/{1}".format(current_path, folder)
 
     modules = glob.glob("{0}/*.py".format(import_path))
     modules.remove("{0}/__init__.py".format(import_path))
-    loaded_modules = []
+    loaded_modules = {}
     for module in modules:
-        module = module.replace(".py","").replace(import_path + "/", "")
+        module = module.replace(".py", "").replace(import_path + "/", "")
         try:
             module = importlib.import_module(".{0}.{1}".format(folder, module), "ded")
-            loaded_modules.append(module)
+            loaded_modules[module.metadata["name"]] = module
         except Exception as e:
             print(e)
     return loaded_modules
 
-def make_title(title):
+def make_ebook_title(title):
     d = datetime.now()
     title = d.strftime(title)
     return title
 
 def get_sources_metadata(sources):
     metadatas = []
-
-    for source in sources:
+    for source_name, source in sources.items():
         metadatas.append(source.metadata)
     return metadatas
 
 def update_state(task, **kwargs):
     if task:
-        task.update_state(state='PROGRESS', **kwargs)
+        task.update_state(**kwargs)
 
