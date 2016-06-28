@@ -132,7 +132,7 @@ def get_data(config):
                                            allow_redirects=True)
 
                     if r_head.status_code == 200:
-                        content_type = post["content_type"] = r_head.headers["Content-Type"]
+                        post["content_type"] = content_type = r_head.headers.get("Content-Type", "")
                         if is_static_image(content_type) or is_unsupported(content_type):
                             pass
                         else:
