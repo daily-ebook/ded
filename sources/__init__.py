@@ -20,7 +20,7 @@ class Chapter:
 
     def add_appendix(self, appendix):
         appendix.add(br())
-        appendix.add(a("<< Back", id=self.name, _class="backToChapter"))
+        appendix.add(a("<< Back", href="#{0}".format(self.name), _class="backToChapter"))
         return self.appendixes.append(appendix)
 
 class Appendix:
