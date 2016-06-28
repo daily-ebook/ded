@@ -9,20 +9,17 @@ def generate_book_from_recipe(recipe, task=None):
 
     utils.setup_user_space(recipe)
 
-    recipe["title"] = utils.make_title(recipe.get("title") or "Daily Epub")
     recipe["chapters"] = []
 
-    utils.update_state(task, meta={'status': 'Importing sources'})
-
-    #XXX: Improve this for loop
     for i, reciped_source in enumerate(recipe.get("sources")):
         reciped_source_name = reciped_source.get("source")
-        for source_generator in sources: 
-            if source_generator.metadata.get("name") == reciped_source_name:
-                chapter = source_generator.build(reciped_source.get("settings") or {})
-                
-                recipe.get("chapters").append(chapter)
+        source = sources.get(reciped_source_name,None)
+        if source:
+            utils.update_state(task, state="PROGRESS", meta={'status': 'Builing {0}'.format(reciped_source_name)})
+            chapter = source.build(reciped_source.get("settings") or {})
+            recipe.get("chapters").append(chapter)
 
+    utils.update_state(task, state="PROGRESS", meta={'status': 'Generating e-book'})
 
     book_generator.generate_book(recipe)
     return True
