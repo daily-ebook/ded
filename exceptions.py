@@ -1,2 +1,2 @@
-class BadConfigException(Exception):
+class BadRecipeException(Exception):
     pass
