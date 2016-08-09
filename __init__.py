@@ -13,9 +13,9 @@ def generate_book_from_recipe(recipe, task=None):
 
     for i, reciped_source in enumerate(recipe.get("sources")):
         reciped_source_name = reciped_source.get("source")
-        source = sources.get(reciped_source_name,None)
+        source = sources.get(reciped_source_name, None)
         if source:
-            utils.update_state(task, state="PROGRESS", meta={'status': 'Builing {0}'.format(reciped_source_name)})
+            utils.update_state(task, state="PROGRESS", meta={'status': 'Building {0}'.format(reciped_source_name)})
             chapter = source.build(reciped_source.get("settings") or {})
             recipe.get("chapters").append(chapter)
 
