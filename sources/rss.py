@@ -7,7 +7,7 @@ from dominate.tags import *
 
 metadata = {
   "name": "rss",
-  "fullname": "RSS Reader",
+  "display_name": "RSS Reader",
   "description": "This source will parse an RSS feed and download its article.",
   "options": []
 }
@@ -44,7 +44,7 @@ def build(config):
             article = Article(url)
             article.download()
             article.parse()
-            
+
             if article.top_image:
                 appendix.add(img(src=article.top_image))
             appendix.add(p(article.text))

@@ -17,7 +17,7 @@ from . import Chapter, Appendix
 
 metadata = {
     "name": "reddit",
-    "fullname": "Reddit",
+    "display_name": "Reddit",
     "description": "This source can parse subreddit, links and comments.",
     "options": []
 }
