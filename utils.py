@@ -1,13 +1,11 @@
 from .exceptions import BadRecipeException
 
-from datetime import datetime
-import glob
 import importlib
 import os
 
 def setup_user_space(recipe):
-    outfolder = recipe.get("outfolder")
-    tmp_dir = recipe.get("tmp_dir")
+    outfolder = recipe.outfolder
+    tmp_dir = recipe.tmp_dir
 
     if not os.path.exists(outfolder):
         os.makedirs(outfolder)
@@ -23,28 +21,18 @@ def fix_recipe(recipe):
 
     return recipe
 
-#FIXME: HACK: this function sucks
+#https://github.com/WikiToLearn/texla/blob/master/texla/Parser/Blocks/__init__.py
 def import_sources():
-    current_path = os.path.dirname(os.path.realpath(__file__))
-    folder = "sources"
-    import_path = "{0}/{1}".format(current_path, folder)
-
-    modules = glob.glob("{0}/*.py".format(import_path))
-    modules.remove("{0}/__init__.py".format(import_path))
+    not_import = ['__init__.py']
     loaded_modules = {}
-    for module in modules:
-        module = module.replace(".py", "").replace(import_path + "/", "")
-        try:
-            module = importlib.import_module(".{0}.{1}".format(folder, module), "ded")
+    for moduleFile in os.listdir(os.path.dirname(__file__) + "/sources"):
+        if moduleFile in not_import:
+            continue
+        if moduleFile.endswith('.py'):
+            module = importlib.import_module('ded.sources.'+ moduleFile[:-3])
             loaded_modules[module.metadata["name"]] = module
-        except Exception as e:
-            print(e)
-    return loaded_modules
 
-def make_ebook_title(title):
-    d = datetime.now()
-    title = d.strftime(title)
-    return title
+    return loaded_modules
 
 def get_sources_metadata(sources):
     metadatas = []

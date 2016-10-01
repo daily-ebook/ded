@@ -1,26 +1,33 @@
 from . import utils
-from . import book_generator
+from .BookGenerator import BookGenerator
+from .Recipe import Recipe
 
 sources = utils.import_sources()
 sources_metadata = utils.get_sources_metadata(sources)
 
+def generate_book_from_dict(dict, task=None):
+    recipe = Recipe(dict) 
+    return generate_book_from_recipe(recipe, task)
+
 def generate_book_from_recipe(recipe, task=None):
-    recipe = utils.fix_recipe(recipe)
+    #recipe = utils.fix_recipe(recipe)
 
     utils.setup_user_space(recipe)
 
-    recipe["chapters"] = []
+    recipe.chapters = []
 
-    for i, reciped_source in enumerate(recipe.get("sources")):
+    for i, reciped_source in enumerate(recipe.sources):
         reciped_source_name = reciped_source.get("name")
-        source = sources.get(reciped_source_name, None)
+        source = sources.get(reciped_source_name)
         if source:
             utils.update_state(task, state="PROGRESS", meta={'status': 'Building {0}'.format(reciped_source_name)})
             print("Building {0}".format(reciped_source_name))
             chapter = source.build(reciped_source.get("config") or {})
-            recipe.get("chapters").append(chapter)
+            recipe.chapters.append(chapter)
 
     utils.update_state(task, state="PROGRESS", meta={'status': 'Generating e-book'})
 
-    book_generator.generate_book(recipe)
+    bookGenerator = BookGenerator(recipe)
+    bookGenerator.generate()
+
     return True
