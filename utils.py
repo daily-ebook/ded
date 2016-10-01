@@ -18,10 +18,6 @@ def setup_user_space(recipe):
 def fix_recipe(recipe):
     recipe["title"] = make_ebook_title(recipe.get("title") or "Daily Epub")
 
-    d = datetime.now()
-    folder = "/tmp/books/"+d.strftime("%H%M%S")
-    recipe["tmp_dir"] = folder
-
     if False:
         raise BadRecipeException("This should never happen")
 

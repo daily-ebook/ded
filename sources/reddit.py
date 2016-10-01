@@ -19,13 +19,42 @@ metadata = {
     "name": "reddit",
     "display_name": "Reddit",
     "description": "This source can parse subreddit, links and comments.",
-    "options": []
+    "allowed_options": [
+        {
+            "name": "subreddit",
+            "description": "The name of the subreddit.",
+            "type": "text",
+            "required": True,
+            "display_name": "Subreddit"
+        },
+        {
+            "name": "sort_by",
+            "description": "Sorting method for the posts.",
+            "type": "select",
+            "options": [ {"value":"hot", "display_value": "Hot"}, {"value":"new", "display_value": "New"} ],
+            "required": True,
+            "display_name": "Sort by"
+        },
+        {
+            "name": "limit",
+            "description": "How many post do you want?",
+            "type": "number",
+            "display_name": "Limit"
+        },
+        {
+            "name": "content",
+            "description": "If this is not checked only titles will be produced",
+            "type": "checkbox",
+            "display_name": "Parse content"
+        }
+    ],
+    "display_option": "subreddit"
 }
 
 def build(config):
 
     data = get_data(config)
-
+    print(config)
     parse_content = config.get("content", False)
     parse_comments = config.get("comments", False)
 
