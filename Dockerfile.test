@@ -1,0 +1,26 @@
+FROM python:3.5-slim
+MAINTAINER crisbal cristian@baldi.me
+
+RUN apt-get update -y
+RUN apt-get upgrade -y
+RUN apt-get install -y curl wget
+
+WORKDIR /opt/ded
+
+# newspaper requirements, should not change much
+RUN apt-get install -y python-dev \
+    libxml2-dev \
+    libxslt-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libpng12-dev
+RUN pip install newspaper3k==0.1.7
+RUN curl https://raw.githubusercontent.com/codelucas/newspaper/master/download_corpora.py | python
+
+ADD requirements.txt .
+RUN pip install -r requirements.txt
+
+ADD . .
+
+ENTRYPOINT ["python"]
+CMD ["-m", "unittest", "discover", "-v", "-t", ".."]

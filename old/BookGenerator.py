@@ -39,7 +39,7 @@ class BookGenerator(object):
 
         with open('{0}/{1}-metadata.xml'.format(tmp_dir, filename), 'w+') as f:
             f.write("""<dc:title>{0}</dc:title>\n
-                    <dc:creator opf:file-as="Daily Ebook" opf:role="aut"> 
+                    <dc:creator opf:file-as="Daily Ebook" opf:role="aut">
                     Daily Ebook</dc:creator>""".format(recipe.pretty__title))
 
         subprocess.call(["pandoc",

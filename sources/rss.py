@@ -1,9 +1,9 @@
-from newspaper import Article
-import feedparser
+#from newspaper import Article
+#import feedparser
 import uuid
 
 from . import Chapter, Appendix
-from dominate.tags import *
+#from dominate.tags import *
 
 metadata = {
   "name": "rss",

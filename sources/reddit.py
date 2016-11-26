@@ -54,7 +54,6 @@ metadata = {
 def build(config):
 
     data = get_data(config)
-    print(config)
     parse_content = config.get("content", False)
     parse_comments = config.get("comments", False)
 
