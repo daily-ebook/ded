@@ -9,6 +9,7 @@ class Recipe(object):
         self.title = ""
         self.sources = []
         self.chapters = []
+        self.html = ""
 
     @staticmethod
     def from_dict(dict):
@@ -32,6 +33,13 @@ class Recipe(object):
     def render(self):
         renderer = RecipeRenderer()
         renderer.render(self)
+
+    def to_dict(self):
+        dict = {}
+        dict["title"] = self.pretty_title
+        dict["html"] = self.html
+        
+        return dict
 
     @property
     def pretty_title(self):
