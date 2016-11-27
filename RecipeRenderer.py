@@ -16,9 +16,9 @@ class RecipeRenderer(object):
         appendixes.add(h1("Appendix"))
 
         for chapter in recipe.chapters:
-            chapters.add(chapter.chapter)
+            chapters.add(chapter.chapter.children)
             for appendix in chapter.appendixes:
-                appendixes.add(appendix.appendix)
+                appendixes.add(appendix.appendix.children)
 
         html.add(chapters)
         html.add(appendixes)
