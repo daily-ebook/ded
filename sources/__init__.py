@@ -19,20 +19,20 @@ class Chapter:
         return self.content.add(what)
 
     def add_appendix(self, appendix):
+        appendix.add(br())
+        appendix.add(a("<< Back", href="#{0}".format(self.id), _class="appendix__back_to_chapter"))
+    
         return self.appendixes.append(appendix)
 
 class Appendix:
-    def __init__(self, title=None, subtitle=None, return_to_id=""):
+    def __init__(self, title=None, subtitle=None, id=""):
         self.appendix = article(_class="appendix")
         
-        self.appendix.add(h4(title, _class="appendix__title"))
+        self.appendix.add(h4(title, id=id, _class="appendix__title"))
         if subtitle:
             self.appendix.add(p(subtitle, _class="appendix__subtitle"))
 
         self.content = self.appendix.add(div(_class="appendix__content"))
         
-        self.appendix.add(br())
-        self.appendix.add(a("<< Back", href="#{0}".format(return_to_id), _class="appendix__back_to_chapter"))
-    
     def add(self, what):
         return self.content.add(what)
