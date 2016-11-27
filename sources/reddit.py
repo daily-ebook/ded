@@ -19,6 +19,7 @@ metadata = {
     "name": "reddit",
     "display_name": "Reddit",
     "description": "This source can parse subreddit, links and comments.",
+    "display_option": "subreddit",
     "allowed_options": [
         {
             "name": "subreddit",
@@ -47,8 +48,7 @@ metadata = {
             "type": "checkbox",
             "display_name": "Parse content"
         }
-    ],
-    "display_option": "subreddit"
+    ]
 }
 
 def build(config):
@@ -71,9 +71,9 @@ def build(config):
                 author = post.get("author") or "[deleted]"
                 num_comments = post.get("num_comments")
 
-                text_anchor = "reddit-{0}-text".format(post.get("id"))
+                content_anchor = "reddit-{0}-content".format(post.get("id"))
 
-                chapter.add(a(b(title), href="#{0}".format(text_anchor)))
+                chapter.add(a(b(title), href="#{0}".format(content_anchor)))
                 chapter.add(" ")
                 chapter.add(small("({0})".format(post.get("domain"))))
                 chapter.add(br())
@@ -86,7 +86,7 @@ def build(config):
                 #end of body, let's build appendix
 
                 if parse_content:
-                    appendix = Appendix(title, post.get("domain"), name=text_anchor)
+                    appendix = Appendix(title, post.get("domain"), id=content_anchor)
 
                     if post.get("is_self"):
                         appendix.add(post.get("selftext") or "<This selfpost has no selftext>")
@@ -113,7 +113,7 @@ def build(config):
                         title = "Comments for '{0}'".format(title[:61] + '...')
 
                     subtitle = "{0} comments".format(num_comments)
-                    appendix = Appendix(title, subtitle, name=comments_anchor)
+                    appendix = Appendix(title, subtitle, id=comments_anchor)
                     appendix.add("There should be comments here.")
                     chapter.add_appendix(appendix)
     else:
