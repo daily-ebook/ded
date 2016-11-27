@@ -1,22 +1,37 @@
-#from newspaper import Article
-#import feedparser
+from newspaper import Article
+import feedparser
 import uuid
 
 from . import Chapter, Appendix
-#from dominate.tags import *
+from dominate.tags import *
 
 metadata = {
-  "name": "rss",
-  "display_name": "RSS Reader",
-  "description": "This source will parse an RSS feed and download its article.",
-  "options": []
+    "name": "rss",
+    "display_name": "RSS Reader",
+    "description": "This source will parse an RSS feed and download its articles.",
+    "display_option": "url",
+    "allowed_options": [
+        {
+            "name": "url",
+            "description": "The url of the feed.",
+            "type": "url",
+            "required": True,
+            "display_name": "URL"
+        },
+        {
+            "name": "limit",
+            "description": "How many items do you want?",
+            "type": "number",
+            "display_name": "Limit"
+        }
+    ]
 }
 
 def build(config):
-    source = config.get("source")
+    url = config.get("url")
     limit = config.get("limit", 10)
 
-    _feed = feedparser.parse(source)
+    _feed = feedparser.parse(url)
     feed = _feed.get("feed")
     entries = _feed.get("entries", [])
 
@@ -32,15 +47,13 @@ def build(config):
         if url is None:
             pass
         else:
-            title = entry.get("title")
-
             text_anchor = str(uuid.uuid4())
 
             chapter.add(a(b(title), href="#"+text_anchor))
             chapter.add(br())
             chapter.add(hr())
 
-            appendix = Appendix(title, "", name=text_anchor)
+            appendix = Appendix(title, "", id=text_anchor)
             article = Article(url)
             article.download()
             article.parse()
